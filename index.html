@@ -159,8 +159,7 @@ const tabsEl    = document.getElementById('tabs');
 const sheetsEl  = document.getElementById('sheets');
 const errorEl   = document.getElementById('error');
 
-fileInput.addEventListener('change', function () {
-  const file = this.files[0];
+function processFile(file) {
   if (!file) return;
   document.getElementById('file-name').textContent = '✓ ' + file.name;
   errorEl.style.display = 'none';
@@ -168,11 +167,21 @@ fileInput.addEventListener('change', function () {
   sheetsEl.innerHTML = '';
   document.getElementById('sheetBtns').innerHTML = '';
   document.getElementById('downloadBar').classList.remove('visible');
-
   const reader = new FileReader();
   reader.onload = function (e) {
-    try {
-      const wb = XLSX.read(e.target.result, { type: 'array', cellDates: true });
+    // save to sessionStorage
+    const arr = new Uint8Array(e.target.result);
+    const str = btoa(arr.reduce((d,b) => d + String.fromCharCode(b), ''));
+    sessionStorage.setItem('kfl_file', str);
+    sessionStorage.setItem('kfl_filename', file.name);
+    handleData(e.target.result);
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function handleData(buffer) {
+  try {
+      const wb = XLSX.read(buffer, { type: 'array', cellDates: true });
       const ws = wb.Sheets[wb.SheetNames[0]];
 
       let rows = [];
@@ -256,8 +265,25 @@ fileInput.addEventListener('change', function () {
       errorEl.textContent = '⚠ ' + err.message;
       errorEl.style.display = 'block';
     }
-  };
-  reader.readAsArrayBuffer(file);
+}
+
+fileInput.addEventListener('change', function () {
+  const file = this.files[0];
+  if (!file) return;
+  document.getElementById('file-name').textContent = '✓ ' + file.name;
+  processFile(file);
+});
+
+// Auto-load from sessionStorage if available
+window.addEventListener('load', () => {
+  const saved = sessionStorage.getItem('kfl_file');
+  const savedName = sessionStorage.getItem('kfl_filename');
+  if (!saved || !savedName) return;
+  document.getElementById('file-name').textContent = '✓ ' + savedName + ' (auto-loaded)';
+  const bin = atob(saved);
+  const arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  handleData(arr.buffer);
 });
 
 function buildWorksheet(date) {

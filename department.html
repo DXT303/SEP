@@ -217,10 +217,36 @@ function updateFileName() {
 }
 function getFile() {
   const f = document.getElementById('fileInput').files[0];
-  if (!f) { showError('Please upload a file first.'); return null; }
-  return f;
+  if (f) return f;
+  const saved = sessionStorage.getItem('kfl_file');
+  if (saved) {
+    const bin = atob(saved);
+    const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    const blob = new Blob([arr], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    return new File([blob], sessionStorage.getItem('kfl_filename') || 'file.xlsx');
+  }
+  showError('Please upload a file first.'); return null;
 }
-function readFile(file, cb) { const r = new FileReader(); r.onload = e => cb(new Uint8Array(e.target.result)); r.readAsArrayBuffer(file); }
+function readFile(file, cb) {
+  const r = new FileReader();
+  r.onload = e => {
+    const arr = new Uint8Array(e.target.result);
+    const str = btoa(arr.reduce((d,b) => d + String.fromCharCode(b), ''));
+    sessionStorage.setItem('kfl_file', str);
+    sessionStorage.setItem('kfl_filename', file.name);
+    cb(arr);
+  };
+  r.readAsArrayBuffer(file);
+}
+
+// Auto-load from sessionStorage if available
+window.addEventListener('load', () => {
+  const saved = sessionStorage.getItem('kfl_file');
+  const savedName = sessionStorage.getItem('kfl_filename');
+  if (!saved || !savedName) return;
+  document.getElementById('file-name').textContent = '✓ ' + savedName + ' (auto-loaded)';
+});
 
 function findHeaderRow(sheet, range) {
   for (let row = range.s.r; row <= Math.min(range.s.r + 10, range.e.r); row++)
