@@ -9,6 +9,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -73,6 +74,22 @@
   .btn-ghost { background: var(--white); color: var(--text); border: 1.5px solid var(--border); }
   .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
   .btn:disabled { opacity: .5; cursor: not-allowed; transform: none !important; }
+  .btn-drive { background: #fff; color: #3c4043; border: 1.5px solid var(--border); }
+  .btn-drive:hover { border-color: #4285f4; color: #4285f4; transform: translateY(-1px); }
+
+  /* MODAL */
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:999; align-items:center; justify-content:center; }
+  .modal-overlay.show { display:flex; }
+  .modal { background:#fff; border-radius:16px; padding:32px; max-width:440px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,.2); }
+  .modal h3 { font-size:18px; font-weight:700; margin-bottom:8px; }
+  .modal p { font-size:13px; color:var(--muted); margin-bottom:20px; }
+  .drive-link { display:flex; align-items:center; gap:10px; background:var(--accent-light); border:1.5px solid var(--accent); border-radius:10px; padding:12px 16px; margin-bottom:20px; }
+  .drive-link a { font-size:13px; font-weight:600; color:var(--accent); word-break:break-all; text-decoration:none; }
+  .drive-link a:hover { text-decoration:underline; }
+  .copy-btn { background:var(--accent); color:#fff; border:none; border-radius:7px; padding:6px 12px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap; }
+  .copy-btn:hover { background:var(--accent-hover); }
+  .modal-close { width:100%; padding:10px; border:1.5px solid var(--border); border-radius:9px; background:#fff; font-size:13px; font-weight:600; cursor:pointer; }
+  .modal-close:hover { border-color:var(--accent); color:var(--accent); }
 
   /* ERROR */
   #error { display: none; background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; border-radius: 10px; padding: 12px 16px; font-size: 13px; margin-bottom: 20px; }
@@ -168,7 +185,10 @@
   <div class="card" id="resultCard" style="display:none;">
     <div class="result-header">
       <div class="result-title">Clients / Departments</div>
-      <button class="btn btn-orange" id="downloadAllBtn" onclick="downloadAllFiles()">⬇ Download All as ZIP</button>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-orange" id="downloadAllBtn" onclick="downloadAllFiles()">⬇ Download All as ZIP</button>
+        <button class="btn btn-drive" id="driveBtn" onclick="uploadToDrive()">☁ Upload to Google Drive</button>
+      </div>
     </div>
     <div class="search-wrap">
       <input type="text" id="searchInput" onkeyup="filterCards()" placeholder="Search client or department…">
@@ -355,6 +375,114 @@ async function downloadAllFiles() {
   });
 }
 
+// ── GOOGLE DRIVE ──────────────────────────────────────────────
+const GOOGLE_CLIENT_ID = '220566446636-rv0fkoj6n9l9fcpgj8m17v1amc2ohpon.apps.googleusercontent.com'; // <-- replace this
+const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
+let driveAccessToken = null;
+
+function getGoogleToken() {
+  return new Promise((resolve, reject) => {
+    if (driveAccessToken) { resolve(driveAccessToken); return; }
+    const client = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: DRIVE_SCOPE,
+      callback: (resp) => {
+        if (resp.error) { reject(resp.error); return; }
+        driveAccessToken = resp.access_token;
+        resolve(driveAccessToken);
+      }
+    });
+    client.requestAccessToken();
+  });
+}
+
+async function createDriveFolder(token, folderName) {
+  const res = await fetch('https://www.googleapis.com/drive/v3/files', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: folderName, mimeType: 'application/vnd.google-apps.folder' })
+  });
+  const data = await res.json();
+  return data.id;
+}
+
+async function uploadFileToDrive(token, folderId, fileName, blob) {
+  const meta = JSON.stringify({ name: fileName, parents: [folderId] });
+  const form = new FormData();
+  form.append('metadata', new Blob([meta], { type: 'application/json' }));
+  form.append('file', blob);
+  const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: form
+  });
+  return res.json();
+}
+
+async function makeFolderPublic(token, folderId) {
+  await fetch(`https://www.googleapis.com/drive/v3/files/${folderId}/permissions`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ role: 'reader', type: 'anyone' })
+  });
+}
+
+async function uploadToDrive() {
+  if (!allDepartments.length) { showError('Please separate the file first.'); return; }
+  const file = getFile(); if (!file) return;
+  const btn = document.getElementById('driveBtn');
+  btn.disabled = true; btn.textContent = 'Uploading…';
+  try {
+    const token = await getGoogleToken();
+    const today = new Date().toISOString().slice(0, 10);
+    const folderName = `KFL_ClientSeparator_${today}`;
+
+    readFile(file, async data => {
+      try {
+        const wb = XLSX.read(data, { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const range = XLSX.utils.decode_range(ws['!ref']);
+        const headerRow = findHeaderRow(ws, range);
+        let deptCol = null;
+        for (let col = range.s.c; col <= range.e.c; col++) {
+          const cell = ws[XLSX.utils.encode_cell({ r: headerRow, c: col })];
+          if (cell && /^department$/i.test(cell.v.toString().trim())) { deptCol = col; break; }
+        }
+        const zip = new JSZip();
+        allDepartments.forEach(dept => {
+          const newWb = buildFilteredWorkbook(ws, range, headerRow, deptCol, dept);
+          zip.file(`${dept.replace(/[^a-zA-Z0-9]/g,'_')}_Data.xlsx`, XLSX.write(newWb, { bookType: 'xlsx', type: 'array' }));
+        });
+        const zipBlob = await zip.generateAsync({ type: 'blob' });
+        const folderId = await createDriveFolder(token, folderName);
+        await uploadFileToDrive(token, folderId, `${folderName}.zip`, zipBlob);
+        await makeFolderPublic(token, folderId);
+        const folderLink = `https://drive.google.com/drive/folders/${folderId}`;
+        showDriveModal(folderLink);
+      } catch(e) { showError('Upload failed: ' + e.message); }
+      finally { btn.disabled = false; btn.textContent = '☁ Upload to Google Drive'; }
+    });
+  } catch(e) {
+    showError('Google sign-in failed or was cancelled.');
+    btn.disabled = false; btn.textContent = '☁ Upload to Google Drive';
+  }
+}
+
+function showDriveModal(link) {
+  document.getElementById('driveLinkAnchor').href = link;
+  document.getElementById('driveLinkAnchor').textContent = link;
+  document.getElementById('driveModal').classList.add('show');
+}
+function closeModal() { document.getElementById('driveModal').classList.remove('show'); }
+function copyLink() {
+  const link = document.getElementById('driveLinkAnchor').href;
+  navigator.clipboard.writeText(link).then(() => {
+    const btn = document.querySelector('.copy-btn');
+    btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = 'Copy', 2000);
+  });
+}
+// ──────────────────────────────────────────────────────────────
+
 function printPDF() {
   clearError(); const file = getFile(); if (!file) return;
   readFile(file, data => {
@@ -380,5 +508,18 @@ function printPDF() {
   });
 }
 </script>
+<!-- MODAL -->
+<div class="modal-overlay" id="driveModal">
+  <div class="modal">
+    <h3>☁ Uploaded to Google Drive</h3>
+    <p id="modalMsg">Your ZIP has been uploaded and a shareable folder link is ready.</p>
+    <div class="drive-link" id="driveLinkWrap">
+      <a id="driveLinkAnchor" href="#" target="_blank">Opening link…</a>
+      <button class="copy-btn" onclick="copyLink()">Copy</button>
+    </div>
+    <button class="modal-close" onclick="closeModal()">Close</button>
+  </div>
+</div>
+
 </body>
 </html>
