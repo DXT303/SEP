@@ -397,19 +397,27 @@ function getGoogleToken() {
 }
 
 async function getOrCreateMainFolder(token) {
-  const folderName = 'KFL_ClientSeparator';
-  // Check if folder already exists
+  const folderName = 'KFL_CLIENTSEPARATOR';
   const search = await fetch(
     `https://www.googleapis.com/drive/v3/files?q=name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false&fields=files(id,name)`,
     { headers: { Authorization: `Bearer ${token}` } }
   );
   const result = await search.json();
   if (result.files && result.files.length > 0) return result.files[0].id;
-  // Create if not exists
   const res = await fetch('https://www.googleapis.com/drive/v3/files', {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ name: folderName, mimeType: 'application/vnd.google-apps.folder' })
+  });
+  const data = await res.json();
+  return data.id;
+}
+
+async function createDateFolder(token, mainFolderId, dateName) {
+  const res = await fetch('https://www.googleapis.com/drive/v3/files', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: dateName, mimeType: 'application/vnd.google-apps.folder', parents: [mainFolderId] })
   });
   const data = await res.json();
   return data.id;
@@ -428,8 +436,8 @@ async function uploadFileToDrive(token, folderId, fileName, blob) {
   return res.json();
 }
 
-async function makeFolderPublic(token, folderId) {
-  await fetch(`https://www.googleapis.com/drive/v3/files/${folderId}/permissions`, {
+async function makeFilePublic(token, fileId) {
+  await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/permissions`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ role: 'reader', type: 'anyone' })
@@ -445,7 +453,6 @@ async function uploadToDrive() {
     const token = await getGoogleToken();
     const today = new Date().toISOString().slice(0, 10);
     const folderName = `KFL_ClientSeparator_${today}`;
-
     readFile(file, async data => {
       try {
         const wb = XLSX.read(data, { type: 'array' });
@@ -463,11 +470,14 @@ async function uploadToDrive() {
           zip.file(`${dept.replace(/[^a-zA-Z0-9]/g,'_')}_Data.xlsx`, XLSX.write(newWb, { bookType: 'xlsx', type: 'array' }));
         });
         const zipBlob = await zip.generateAsync({ type: 'blob' });
-        const folderId = await getOrCreateMainFolder(token);
-        await uploadFileToDrive(token, folderId, `${folderName}.zip`, zipBlob);
-        await makeFolderPublic(token, folderId);
-        const folderLink = `https://drive.google.com/drive/folders/${folderId}`;
-        showDriveModal(folderLink);
+        const today = new Date().toISOString().slice(0, 10);
+        const zipName = `KFL_ClientSeparator_${today}.zip`;
+        const mainFolderId = await getOrCreateMainFolder(token);
+        const dateFolderId = await createDateFolder(token, mainFolderId, today);
+        const uploadedFile = await uploadFileToDrive(token, dateFolderId, zipName, zipBlob);
+        await makeFilePublic(token, uploadedFile.id);
+        const fileLink = `https://drive.google.com/file/d/${uploadedFile.id}/view`;
+        showDriveModal(fileLink);
       } catch(e) { showError('Upload failed: ' + e.message); }
       finally { btn.disabled = false; btn.textContent = '☁ Upload to Google Drive'; }
     });
