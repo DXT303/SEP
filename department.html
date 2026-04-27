@@ -396,7 +396,16 @@ function getGoogleToken() {
   });
 }
 
-async function createDriveFolder(token, folderName) {
+async function getOrCreateMainFolder(token) {
+  const folderName = 'KFL_ClientSeparator';
+  // Check if folder already exists
+  const search = await fetch(
+    `https://www.googleapis.com/drive/v3/files?q=name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false&fields=files(id,name)`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  const result = await search.json();
+  if (result.files && result.files.length > 0) return result.files[0].id;
+  // Create if not exists
   const res = await fetch('https://www.googleapis.com/drive/v3/files', {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -454,7 +463,7 @@ async function uploadToDrive() {
           zip.file(`${dept.replace(/[^a-zA-Z0-9]/g,'_')}_Data.xlsx`, XLSX.write(newWb, { bookType: 'xlsx', type: 'array' }));
         });
         const zipBlob = await zip.generateAsync({ type: 'blob' });
-        const folderId = await createDriveFolder(token, folderName);
+        const folderId = await getOrCreateMainFolder(token);
         await uploadFileToDrive(token, folderId, `${folderName}.zip`, zipBlob);
         await makeFolderPublic(token, folderId);
         const folderLink = `https://drive.google.com/drive/folders/${folderId}`;
