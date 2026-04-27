@@ -477,8 +477,8 @@ async function uploadToDrive() {
         const dateFolderId = await createDateFolder(token, mainFolderId, today);
         const uploadedFile = await uploadFileToDrive(token, dateFolderId, zipName, zipBlob);
         await makeFilePublic(token, uploadedFile.id);
-        const fileLink = `https://drive.google.com/file/d/${uploadedFile.id}/view`;
-        showDriveModal(fileLink);
+        const folderLink = `https://drive.google.com/drive/folders/${dateFolderId}`;
+        showDriveModal(folderLink);
       } catch(e) { showError('Upload failed: ' + e.message); }
       finally { btn.disabled = false; btn.textContent = '☁ Upload to Google Drive'; }
     });
