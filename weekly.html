@@ -3,22 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Client + Date Separator · KFL Organizer</title>
+<title>Weekly Separator · KFL Organizer</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --bg: #f7f8fa; --white: #ffffff; --accent: #7c3aed;
-    --accent-light: #f5f3ff; --accent-hover: #6d28d9;
+    --bg: #f7f8fa; --white: #ffffff; --accent: #0891b2;
+    --accent-light: #ecfeff; --accent-hover: #0e7490;
     --text: #111827; --muted: #6b7280; --border: #e5e7eb;
     --shadow: 0 4px 24px rgba(0,0,0,.07); --radius: 14px;
   }
   html { scroll-behavior: smooth; }
   body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); }
 
-  /* NAV */
   nav {
     position: sticky; top: 0; z-index: 100;
     background: rgba(255,255,255,.85); backdrop-filter: blur(12px);
@@ -32,7 +31,6 @@
   .nav-links a:hover { color: var(--text); background: var(--bg); }
   .nav-links a.active { color: var(--accent); background: var(--accent-light); }
 
-  /* PAGE HERO */
   .page-hero { max-width: 1100px; margin: 0 auto; padding: 60px 40px 40px; }
   .page-tag { display: inline-flex; align-items: center; gap: 7px; background: var(--accent-light); color: var(--accent); font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 20px; margin-bottom: 16px; }
   .page-tag::before { content: ''; width: 7px; height: 7px; background: var(--accent); border-radius: 50%; }
@@ -40,14 +38,10 @@
   .page-hero h1 span { color: var(--accent); }
   .page-hero p { font-size: 15px; color: var(--muted); }
 
-  /* MAIN */
   .main { max-width: 1100px; margin: 0 auto; padding: 0 40px 60px; }
-
-  /* CARD */
   .card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px; margin-bottom: 24px; }
   .card-title { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; }
 
-  /* UPLOAD */
   .upload-zone { border: 2px dashed var(--border); border-radius: 10px; padding: 40px 24px; text-align: center; transition: border-color .2s, background .2s; }
   .upload-zone:hover { border-color: var(--accent); background: var(--accent-light); }
   .upload-zone input { display: none; }
@@ -57,38 +51,38 @@
   .upload-zone p { font-size: 13px; color: var(--muted); }
   #file-name { font-size: 12px; color: var(--accent); margin-top: 10px; font-weight: 500; }
 
-  /* BUTTONS */
   .btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 20px; border-radius: 9px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; transition: all .2s; text-decoration: none; font-family: 'Inter', sans-serif; }
   .btn-primary { background: var(--accent); color: #fff; }
-  .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(124,58,237,.3); }
+  .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(8,145,178,.3); }
   .btn-success { background: #059669; color: #fff; }
   .btn-success:hover { background: #047857; transform: translateY(-1px); }
   .btn-orange { background: #d97706; color: #fff; }
   .btn-orange:hover { background: #b45309; transform: translateY(-1px); }
   .btn:disabled { opacity: .5; cursor: not-allowed; transform: none !important; }
 
-  /* ERROR */
   #error { display: none; background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; border-radius: 10px; padding: 12px 16px; font-size: 13px; margin-bottom: 20px; }
 
-  /* RESULT */
   .result-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
   .result-title { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
 
-  /* SEARCH */
   .search-wrap { margin-bottom: 16px; position: relative; }
   .search-wrap input { width: 100%; padding: 10px 16px 10px 38px; border: 1.5px solid var(--border); border-radius: 9px; font-size: 13px; font-family: 'Inter', sans-serif; outline: none; transition: border-color .2s; background: var(--bg); }
   .search-wrap input:focus { border-color: var(--accent); background: var(--white); }
   .search-wrap::before { content: '🔍'; position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 13px; }
 
-  /* CLIENT GRID */
   .clients-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
   .client-card { background: var(--white); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 20px 22px; display: flex; align-items: center; justify-content: space-between; gap: 12px; transition: all .2s; min-width: 0; overflow: hidden; }
-  .client-card:hover { border-color: var(--accent); box-shadow: 0 4px 20px rgba(124,58,237,.1); transform: translateY(-2px); }
+  .client-card:hover { border-color: var(--accent); box-shadow: 0 4px 20px rgba(8,145,178,.1); transform: translateY(-2px); }
   .client-info { display: flex; align-items: center; gap: 14px; min-width: 0; flex: 1; }
   .client-avatar { width: 44px; height: 44px; border-radius: 12px; background: var(--accent-light); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; flex-shrink: 0; }
   .client-text { min-width: 0; }
   .client-name { font-size: 14px; font-weight: 600; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .client-meta { font-size: 12px; color: var(--muted); }
+
+  /* WEEK PREVIEW BADGES */
+  .week-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .week-badge { background: var(--accent-light); color: var(--accent); font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
+
   #notFound { display: none; text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
 
   @media (max-width: 768px) {
@@ -107,16 +101,16 @@
     <a href="home.html">Home</a>
     <a href="index.html">Date Separator</a>
     <a href="department.html">Client Separator</a>
-    <a href="clientdate.html" class="active">Client + Date</a>
-    <a href="weekly.html">Weekly</a>
+    <a href="clientdate.html">Client + Date</a>
+    <a href="weekly.html" class="active">Weekly</a>
     <a href="home.html#about">About</a>
   </div>
 </nav>
 
 <div class="page-hero">
-  <div class="page-tag">Client + Date Separator</div>
-  <h1>Organize by <span>Client & Date</span></h1>
-  <p>Upload your Excel file and get one file per client — each with sheets separated by date.</p>
+  <div class="page-tag">Weekly Separator</div>
+  <h1>Organize by <span>Client & Week</span></h1>
+  <p>Get one Excel file per client — each sheet is a weekly summary (Saturday to Friday).</p>
 </div>
 
 <div class="main">
@@ -133,7 +127,7 @@
       <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="updateFileName()">
     </div>
     <div style="margin-top:20px;">
-      <button class="btn btn-primary" onclick="separate()">⚡ Separate by Client + Date</button>
+      <button class="btn btn-primary" onclick="separate()">⚡ Separate by Client + Week</button>
     </div>
   </div>
 
@@ -141,8 +135,8 @@
 
   <div class="card" id="resultCard" style="display:none;">
     <div class="result-header">
-      <div class="result-title">Clients — Sheets by Date</div>
-      <button class="btn btn-orange" onclick="downloadAll()">⬇ Download All as ZIP</button>
+      <div class="result-title">Clients — Sheets by Week</div>
+      <button class="btn btn-orange" id="downloadAllBtn" onclick="downloadAll()">⬇ Download All as ZIP</button>
     </div>
     <div class="search-wrap">
       <input type="text" id="searchInput" onkeyup="filterCards()" placeholder="Search client or department…">
@@ -154,8 +148,9 @@
 </div>
 
 <script>
-let clientData = {};
-let cdHeaders = [];
+let clientWeekData = {};
+let weekHeaders = [];
+let weekLabels = []; // ['Week 1 (Apr 18-24)', ...]
 
 function showError(msg) { const e = document.getElementById('error'); e.textContent = '⚠ ' + msg; e.style.display = 'block'; }
 function clearError() { document.getElementById('error').style.display = 'none'; }
@@ -166,10 +161,7 @@ function updateFileName() {
 function getInitials(name) {
   return name.split(/[\s>_-]/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('');
 }
-function normalizeDate(val) {
-  if (val instanceof Date) return `${String(val.getDate()).padStart(2,'0')}-${String(val.getMonth()+1).padStart(2,'0')}-${val.getFullYear()}`;
-  return String(val).replace(/\s+/g, '').trim();
-}
+
 function getFile() {
   const f = document.getElementById('fileInput').files[0];
   if (f) return f;
@@ -184,6 +176,31 @@ function getFile() {
   showError('Please upload a file first.'); return null;
 }
 
+function parseDate(val) {
+  if (val instanceof Date) return new Date(val.getFullYear(), val.getMonth(), val.getDate());
+  const s = String(val).trim();
+  // dd-mm-yyyy or dd/mm/yyyy
+  const m = s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/);
+  if (m) return new Date(parseInt(m[3]), parseInt(m[2])-1, parseInt(m[1]));
+  const d = new Date(s);
+  if (!isNaN(d)) return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  return null;
+}
+
+function formatDate(d) {
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${months[d.getMonth()]} ${d.getDate()}`;
+}
+
+function getSaturdayStart(date) {
+  // Get the Saturday on or before this date
+  const d = new Date(date);
+  const day = d.getDay(); // 0=Sun,1=Mon,...,6=Sat
+  const diff = (day >= 6) ? 0 : -(day + 1); // go back to Saturday
+  d.setDate(d.getDate() + diff);
+  return d;
+}
+
 function separate() {
   clearError();
   const file = getFile(); if (!file) return;
@@ -191,7 +208,6 @@ function separate() {
   reader.onload = e => {
     try {
       const arr = new Uint8Array(e.target.result);
-      // save to sessionStorage
       const str = btoa(arr.reduce((d,b) => d + String.fromCharCode(b), ''));
       sessionStorage.setItem('kfl_file', str);
       sessionStorage.setItem('kfl_filename', file.name);
@@ -200,7 +216,7 @@ function separate() {
       const ws = wb.Sheets[wb.SheetNames[0]];
       const range = XLSX.utils.decode_range(ws['!ref']);
 
-      // find header row by ID column
+      // find header row
       let headerRow = 0;
       outer: for (let r = 0; r <= Math.min(10, range.e.r); r++)
         for (let c = range.s.c; c <= range.e.c; c++) {
@@ -208,34 +224,82 @@ function separate() {
           if (cell && /^id$/i.test(cell.v.toString().trim())) { headerRow = r; break outer; }
         }
 
-      cdHeaders = [];
+      weekHeaders = [];
       for (let c = range.s.c; c <= range.e.c; c++) {
         const cell = ws[XLSX.utils.encode_cell({r: headerRow, c})];
-        cdHeaders.push(cell ? cell.v.toString().trim() : '');
+        weekHeaders.push(cell ? cell.v.toString().trim() : '');
       }
 
-      const deptIdx = cdHeaders.findIndex(h => /^department$/i.test(h));
-      const dateIdx = cdHeaders.findIndex(h => /date/i.test(h));
+      const deptIdx = weekHeaders.findIndex(h => /^department$/i.test(h));
+      const dateIdx = weekHeaders.findIndex(h => /date/i.test(h));
       if (deptIdx === -1) { showError('No "Department" column found.'); return; }
       if (dateIdx === -1) { showError('No "Date" column found.'); return; }
 
-      clientData = {};
+      // collect all rows with parsed dates
+      const allRows = [];
       for (let r = headerRow + 1; r <= range.e.r; r++) {
         const deptCell = ws[XLSX.utils.encode_cell({r, c: deptIdx})];
         const dateCell = ws[XLSX.utils.encode_cell({r, c: dateIdx})];
-        if (!deptCell) continue;
+        if (!deptCell || !dateCell) continue;
+        const parsedDate = parseDate(dateCell.v);
+        if (!parsedDate) continue;
         const deptVal = deptCell.v.toString().trim().toUpperCase();
-        const client = deptVal.includes('AGRI-EXIM>PROJECT-BASE') ? 'PROJECT-BASE' : deptVal.includes('AGRI-EXIM') ? 'AGRI-EXIM' : deptCell.v.toString().trim();
-        const date = dateCell ? normalizeDate(dateCell.v) : 'Unknown';
-        if (!clientData[client]) clientData[client] = {};
-        if (!clientData[client][date]) clientData[client][date] = [];
+        const client = deptVal.includes('AGRI-EXIM>PROJECT-BASE') ? 'PROJECT-BASE'
+          : deptVal.includes('AGRI-EXIM') ? 'AGRI-EXIM'
+          : deptCell.v.toString().trim();
         const rowData = [];
         for (let c = range.s.c; c <= range.e.c; c++) {
           const cell = ws[XLSX.utils.encode_cell({r, c})];
-          rowData.push(cell ? (cell.v instanceof Date ? normalizeDate(cell.v) : cell.v) : '');
+          let val = '';
+          if (cell) {
+            val = cell.v instanceof Date
+              ? `${String(cell.v.getDate()).padStart(2,'0')}-${String(cell.v.getMonth()+1).padStart(2,'0')}-${cell.v.getFullYear()}`
+              : cell.v;
+          }
+          rowData.push(val);
         }
-        clientData[client][date].push(rowData);
+        allRows.push({ client, date: parsedDate, rowData });
       }
+
+      if (!allRows.length) { showError('No valid data found.'); return; }
+
+      // find earliest Saturday
+      const allDates = allRows.map(r => r.date);
+      const minDate = new Date(Math.min(...allDates.map(d => d.getTime())));
+      const weekStart = getSaturdayStart(minDate);
+
+      // build week buckets
+      const weekMap = {}; // weekKey -> { label, start, end }
+      allRows.forEach(row => {
+        const diff = Math.floor((row.date - weekStart) / (7 * 24 * 60 * 60 * 1000));
+        const weekNum = Math.floor(diff >= 0 ? diff : 0);
+        const wStart = new Date(weekStart);
+        wStart.setDate(wStart.getDate() + weekNum * 7);
+        const wEnd = new Date(wStart);
+        wEnd.setDate(wEnd.getDate() + 6);
+        const key = weekNum;
+        if (!weekMap[key]) {
+          weekMap[key] = {
+            label: `Week ${weekNum + 1} (${formatDate(wStart)}-${formatDate(wEnd)})`,
+            start: wStart, end: wEnd
+          };
+        }
+      });
+
+      // sort week keys
+      const sortedWeekKeys = Object.keys(weekMap).map(Number).sort((a,b) => a-b);
+      weekLabels = sortedWeekKeys.map(k => weekMap[k].label);
+
+      // group: client -> weekLabel -> rows
+      clientWeekData = {};
+      allRows.forEach(row => {
+        const diff = Math.floor((row.date - weekStart) / (7 * 24 * 60 * 60 * 1000));
+        const weekNum = Math.floor(diff >= 0 ? diff : 0);
+        const label = weekMap[weekNum].label;
+        if (!clientWeekData[row.client]) clientWeekData[row.client] = {};
+        if (!clientWeekData[row.client][label]) clientWeekData[row.client][label] = [];
+        clientWeekData[row.client][label].push(row.rowData);
+      });
 
       renderCards();
     } catch(err) { showError(err.message); }
@@ -246,21 +310,27 @@ function separate() {
 function renderCards() {
   const grid = document.getElementById('clientsGrid');
   grid.innerHTML = '';
-  Object.keys(clientData).forEach(client => {
-    const dates = Object.keys(clientData[client]);
-    const total = dates.reduce((s, d) => s + clientData[client][d].length, 0);
+  Object.keys(clientWeekData).sort().forEach(client => {
+    const weeks = Object.keys(clientWeekData[client]);
+    const total = weeks.reduce((s, w) => s + clientWeekData[client][w].length, 0);
     const card = document.createElement('div');
     card.className = 'client-card';
     card.dataset.name = client.toLowerCase();
+
+    const badgesHtml = weekLabels
+      .filter(w => clientWeekData[client][w])
+      .map(w => `<span class="week-badge">${w}</span>`).join('');
+
     card.innerHTML = `
       <div class="client-info">
         <div class="client-avatar">${getInitials(client)}</div>
         <div class="client-text">
           <div class="client-name" title="${client}">${client}</div>
-          <div class="client-meta">${total} records · ${dates.length} date${dates.length !== 1 ? 's' : ''}</div>
+          <div class="client-meta">${total} records · ${weeks.length} week${weeks.length !== 1 ? 's' : ''}</div>
+          <div class="week-badges">${badgesHtml}</div>
         </div>
       </div>
-      <button class="btn btn-success" style="padding:7px 14px;font-size:12px;flex-shrink:0;" onclick="downloadClient('${client.replace(/'/g, "\\'")}')">⬇ Download</button>`;
+      <button class="btn btn-success" style="padding:7px 14px;font-size:12px;flex-shrink:0;align-self:flex-start;" onclick="downloadClient('${client.replace(/'/g, "\\'")}')">⬇ Download</button>`;
     grid.appendChild(card);
   });
   document.getElementById('resultCard').style.display = 'block';
@@ -275,35 +345,37 @@ function filterCards() {
   document.getElementById('notFound').style.display = any ? 'none' : 'block';
 }
 
-function downloadClient(client) {
+function buildClientWorkbook(client) {
   const wb = XLSX.utils.book_new();
-  Object.keys(clientData[client]).sort().forEach(date => {
-    const ws = XLSX.utils.aoa_to_sheet([cdHeaders, ...clientData[client][date]]);
-    XLSX.utils.book_append_sheet(wb, ws, date.replace(/[\/\\:?*\[\]]/g, '-'));
+  weekLabels.forEach(label => {
+    if (!clientWeekData[client][label]) return;
+    const ws = XLSX.utils.aoa_to_sheet([weekHeaders, ...clientWeekData[client][label]]);
+    XLSX.utils.book_append_sheet(wb, ws, label.replace(/[\/\\:?*\[\]]/g, '-').substring(0, 31));
   });
-  XLSX.writeFile(wb, `${client.replace(/[^a-zA-Z0-9]/g,'_')}_ByDate.xlsx`);
+  return wb;
+}
+
+function downloadClient(client) {
+  const wb = buildClientWorkbook(client);
+  XLSX.writeFile(wb, `${client.replace(/[^a-zA-Z0-9]/g,'_')}_Weekly.xlsx`);
 }
 
 async function downloadAll() {
-  if (!Object.keys(clientData).length) { showError('Please separate the file first.'); return; }
-  const btn = event.target;
+  if (!Object.keys(clientWeekData).length) { showError('Please separate the file first.'); return; }
+  const btn = document.getElementById('downloadAllBtn');
   btn.disabled = true; btn.textContent = 'Creating ZIP…';
   try {
     const zip = new JSZip();
-    Object.keys(clientData).forEach(client => {
-      const wb = XLSX.utils.book_new();
-      Object.keys(clientData[client]).sort().forEach(date => {
-        const ws = XLSX.utils.aoa_to_sheet([cdHeaders, ...clientData[client][date]]);
-        XLSX.utils.book_append_sheet(wb, ws, date.replace(/[\/\\:?*\[\]]/g, '-'));
-      });
-      zip.file(`${client.replace(/[^a-zA-Z0-9]/g,'_')}_ByDate.xlsx`, XLSX.write(wb, { bookType: 'xlsx', type: 'array' }));
+    Object.keys(clientWeekData).forEach(client => {
+      const wb = buildClientWorkbook(client);
+      zip.file(`${client.replace(/[^a-zA-Z0-9]/g,'_')}_Weekly.xlsx`, XLSX.write(wb, { bookType: 'xlsx', type: 'array' }));
     });
     const blob = await zip.generateAsync({ type: 'blob' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `KFL_ClientDate_${new Date().toISOString().slice(0,10)}.zip`;
+    a.download = `KFL_Weekly_${new Date().toISOString().slice(0,10)}.zip`;
     a.click();
-  } catch(e) { showError(e.message); }
+  } catch(err) { showError(err.message); }
   finally { btn.disabled = false; btn.textContent = '⬇ Download All as ZIP'; }
 }
 
