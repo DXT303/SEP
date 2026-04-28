@@ -82,7 +82,7 @@
 
   /* CLIENT GRID */
   .clients-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
-  .client-card { background: var(--white); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 20px 22px; display: flex; align-items: center; justify-content: space-between; gap: 12px; transition: all .2s; }
+  .client-card { background: var(--white); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 20px 22px; display: flex; align-items: center; justify-content: space-between; gap: 12px; transition: all .2s; min-width: 0; overflow: hidden; }
   .client-card:hover { border-color: var(--accent); box-shadow: 0 4px 20px rgba(124,58,237,.1); transform: translateY(-2px); }
   .client-info { display: flex; align-items: center; gap: 14px; min-width: 0; flex: 1; }
   .client-avatar { width: 44px; height: 44px; border-radius: 12px; background: var(--accent-light); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; flex-shrink: 0; }
